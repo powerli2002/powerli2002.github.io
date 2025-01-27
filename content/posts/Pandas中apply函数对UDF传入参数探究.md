@@ -1,7 +1,7 @@
 ---
 title: Pandas中apply函数对UDF传入参数探究
-date: 2024-11-28
-slug: blog-post-slug
+date: 2024-11-28T12:48:00
+slug: pandasudf
 tags:
   - "#pandas"
 categories:
@@ -13,7 +13,7 @@ cover:
 draft: false
 share: true
 ---
-
+# 问题背景
 在使用pandas.apply函数时，遇到这样一个问题：
 在`pandas.apply(func,axis=1)` 的函数`func`中，直接对传入的行进行操作，
 例如：
@@ -43,7 +43,7 @@ pandas的官方文档提到：在使用UDF（用户自定函数）时，迭代�
 
 但当我对传入的row参数进行添加，并存储到buffer中，所产生的现象却不是前文所能解释的，我需要对apply的传参方式进行探究。
 
-## apply传入参数方式及其问题
+# apply传入参数方式及其问题
 使用`id()`函数查看apply传入参数在python中的唯一id，发现每个传入的row的id都一样，尽管他们的值不相同。
 
 ```python
@@ -93,10 +93,10 @@ All ids are the same: True
 ```
 这说明，实际上虽然apply占有一整个dataframe，传入时并不是每行新建一个series对象传入，他们的唯一标识都是一样的。apply的行传入可能有某种重用机制。
 
-### python的id()
+## python的id()
 `id()` 函数返回的是对象的唯一标识符，通常称为对象的“身份”（identity）。这个标识符是一个整数，它在对象的生命周期内是唯一的且恒定的。对于 CPython 解释器而言，这个标识符实际上是对象在内存中的地址
 
-### 为什么修改传入参数，记录到buffer中后，结果都一样？
+## 为什么修改传入参数，记录到buffer中后，结果都一样？
 ```python
 import pandas as pd
 
@@ -161,7 +161,7 @@ for i in buffer:
 尽管引用相同，但对象的内容在每次迭代中被更新为当前行的数据。这就是传入的参数中，地址一样，值不一样的原因。
 
 
-## 源码阅读
+# 源码阅读
 
 查看`df.apply` 的定义,跳转到pandas/core/frame.py：
 ```python
@@ -294,7 +294,7 @@ class FrameColumnApply(FrameApply):
 
 
 
-## Reference
+# Reference
 - [pandas.DataFrame.apply — pandas 2.2.3 文档 --- pandas.DataFrame.apply — pandas 2.2.3 documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.apply.html#pandas.DataFrame.apply)
 - [Frequently Asked Questions (FAQ) — pandas 2.2.3 documentation](https://pandas.pydata.org/docs/user_guide/gotchas.html#mutating-with-user-defined-function-udf-methods)
 - [CoW: Avoid warning in apply for mixed dtype frame by phofl · Pull Request #56212 · pandas-dev/pandas](https://github.com/pandas-dev/pandas/pull/56212)
