@@ -37,8 +37,8 @@ params:
   comments: false
   hidemeta: false
   hideSummary: false
-  showtoc: false
-  tocopen: false
+  showtoc: true
+  tocopen: true
 
   assets:
     # disableHLJS: true # to disable highlight.js
@@ -93,7 +93,7 @@ params:
     hiddenInSingle: true # hide on single page
 
   editPost:
-    URL: "https://github.com/powerli2002.github.io/content"
+    URL: "https://github.com/powerli2002/powerli2002.github.io/content"
     Text: "Suggest Changes" # edit text
     appendFilePath: true # to append file path to Edit link
 
@@ -142,3 +142,4 @@ outputs:
         - HTML
         - RSS
         - JSON # is necessary
+googleAnalytics: G-QE4MJJ2MT6
