@@ -20,7 +20,7 @@ params:
   author: Jian
   # author: ["Me", "You"] # multiple authors
   images: ["<link or path of image for opengraph, twitter-cards>"]
-  DateFormat: "2024-11-28"
+  DateFormat: "January 2, 2006" # Go语言时间格式化规定写法，必须写成"January 2, 2006"或"2006-01-02"
   defaultTheme: auto # dark, light
   disableThemeToggle: false
 
@@ -136,10 +136,10 @@ markup:
     # guessSyntax: true
     # lineNos: true
     # style: monokai
-  
+
 outputs:
-    home:
-        - HTML
-        - RSS
-        - JSON # is necessary
+  home:
+    - HTML
+    - RSS
+    - JSON # is necessary
 googleAnalytics: G-QE4MJJ2MT6
