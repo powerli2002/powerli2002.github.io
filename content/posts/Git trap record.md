@@ -1,7 +1,7 @@
 ---
 title: Git踩坑记录
 date: 2025-03-09T21:28:21
-slug: blog-post-slug
+slug: GitTrap
 tags:
   - "#Git"
 categories:
