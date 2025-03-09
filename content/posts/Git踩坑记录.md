@@ -1,15 +1,14 @@
 ---
 title: Git踩坑记录
 date: 2025-03-09T21:28:21
-slug: blog-post-slug
+slug: GitTrap
 tags:
   - "#Git"
 categories:
   - "#技术探究"
 description: 协作开发项目时，使用git遇到的一系列问题和解决方法
 summary: 协作开发项目时，拉取到删除文件夹的commit操作，并被重复执行。由于git merge操作不当导致修复困难。代价为dev分支此前的merge记录被清空。
-cover:
- image: 
+cover.image: 
 draft: false
 share: true
 ---
@@ -23,7 +22,7 @@ share: true
 
 # 由于拉取代码不当导致的代码丢失问题
 
-我有两个分支，
+我有两个分支：
 dev-auth 提交分支
 dev-auth-local 本地开发分支
 
@@ -99,9 +98,6 @@ git merge --ff-only feature
 ![](https://raw.githubusercontent.com/powerli2002/project-img/main/myblog/20250309215225939.png)
 
 
-[git代码分支有不同合并后代码并无更新还存在不同_git merge master没有更新代码-CSDN博客](https://blog.csdn.net/qq_61832991/article/details/128577192)
-
-
 git merge操作的本质是应用commit。因为merge只应用commit记录更改代码，包含了commit就不更改了，不看具体代码一不一致。
 
 ## 解决方案
@@ -125,3 +121,4 @@ git branch backup-dev-auth
 
 # Reference
 
+[git代码分支有不同合并后代码并无更新还存在不同_git merge master没有更新代码-CSDN博客](https://blog.csdn.net/qq_61832991/article/details/128577192)
