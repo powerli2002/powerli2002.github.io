@@ -23,7 +23,7 @@ share: true
 
 # 由于拉取代码不当导致的代码丢失问题
 
-我有两个分支，
+我有两个分支：
 dev-auth 提交分支
 dev-auth-local 本地开发分支
 
