@@ -1,12 +1,13 @@
 baseURL: "https://powerli2002.github.io/"
 title: "Jian's Blog"
-paginate: 5
+pagination:
+  pagerSize: 5
 theme: PaperMod
 
 enableRobotsTXT: true
 buildDrafts: false
-buildFuture: false
-buildExpired: false
+buildFuture: true
+buildExpired: true
 
 minify:
   disableXML: true
@@ -71,8 +72,13 @@ params:
 
   # home-info mode
   homeInfoParams:
-    Title: "Hi there \U0001F44B"
-    Content: Welcome to my blog
+    Title: "👋 Hi, I'm Zijian Li"
+    Content: |
+      🌟 I’m a passionate developer with a strong interest in Software engineering, AI technology and Data science. 
+
+      🎓 Currently pursuing a Master's degree in Computer Science and Technology at Beijing University of Posts and Telecommunications (BUPT).
+
+      📮 My blog is continuously being updated. Stay tuned and feel free to follow! 
 
   socialIcons:
     - name: github
