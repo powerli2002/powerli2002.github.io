@@ -3,12 +3,13 @@ title: Git踩坑记录
 date: 2025-03-09T21:28:21
 slug: GitTrap
 tags:
-  - "#Git"
+  - Git
 categories:
-  - "#技术探究"
+  - 技术探究
 description: 协作开发项目时，使用git遇到的一系列问题和解决方法
 summary: 协作开发项目时，拉取到删除文件夹的commit操作，并被重复执行。由于git merge操作不当导致修复困难。代价为dev分支此前的merge记录被清空。
-cover.image: 
+cover:
+ image:
 draft: false
 share: true
 ---
