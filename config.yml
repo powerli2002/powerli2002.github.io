@@ -143,20 +143,26 @@ markup:
     # lineNos: true
     # style: monokai
   goldmark:
-  extensions:
-    passthrough:
-      delimiters:
-        block:
-        - - \[
-          - \]
-        - - $$
-          - $$
-        inline:
-        - - \(
-          - \)
-        - - $
-          - $
-      enable: true
+    extensions:
+      passthrough:
+        enable: true
+        delimiters:
+          block:
+            - ["\\[", "\\]"]
+            - ["$$", "$$"]
+            - ["\\begin{aligned}", "\\end{aligned}"]
+            - ["\\begin{align}", "\\end{align}"]
+            - ["\\begin{align*}", "\\end{align*}"]
+            - ["\\begin{gather}", "\\end{gather}"]
+            - ["\\begin{gather*}", "\\end{gather*}"]
+            - ["\\begin{equation}", "\\end{equation}"]
+            - ["\\begin{equation*}", "\\end{equation*}"]
+            - ["\\begin{multline}", "\\end{multline}"]
+            - ["\\begin{multline*}", "\\end{multline*}"]
+            - ["\\begin{cases}", "\\end{cases}"]
+          inline:
+            - ["\\(", "\\)"]
+            - ["$", "$"]
 
 outputs:
   home:
