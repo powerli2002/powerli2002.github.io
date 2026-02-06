@@ -1,1 +1,84 @@
-{{ template "_internal/google_analytics.html" . }}
+{{- /* 扩展 <head>：放站点级自定义内容（例如数学渲染脚本） */ -}}
+
+{{- /* 数学公式渲染：KaTeX + auto-render
+      说明：
+      - 内容层尽量使用 $$...$$（块级）与 $...$（行内）
+      - 这里做多 CDN 兜底，避免某个域名不可达导致整站公式失效
+*/ -}}
+<script>
+(function () {
+  // 依次尝试多个 CDN，尽可能提高可用性
+  var cdnBases = [
+    "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/",
+    "https://unpkg.com/katex@0.16.11/dist/",
+    "https://cdn.jsdmirror.com/npm/katex@0.16.11/dist/"
+  ];
+
+  // KaTeX auto-render 配置：优先 $$，同时支持 $ 与 \\(\\)、\\[\\]
+  var renderOptions = {
+    delimiters: [
+      { left: "$$", right: "$$", display: true },
+      { left: "$", right: "$", display: false },
+      { left: "\\\\(", right: "\\\\)", display: false },
+      { left: "\\\\[", right: "\\\\]", display: true }
+    ],
+    throwOnError: false
+  };
+
+  function onReady(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn);
+    } else {
+      fn();
+    }
+  }
+
+  function loadCss(href, onload, onerror) {
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.onload = onload;
+    link.onerror = onerror;
+    document.head.appendChild(link);
+  }
+
+  function loadScript(src, onload, onerror) {
+    var s = document.createElement("script");
+    // 动态插入脚本默认 async；这里显式关闭，保证回调链更稳定
+    s.async = false;
+    s.src = src;
+    s.onload = onload;
+    s.onerror = onerror;
+    document.head.appendChild(s);
+  }
+
+  function typeset() {
+    if (typeof window.renderMathInElement !== "function") return;
+    window.renderMathInElement(document.body, renderOptions);
+  }
+
+  function tryLoad(i) {
+    if (i >= cdnBases.length) {
+      console.warn("[KaTeX] 资源加载失败：请检查网络是否阻断 CDN。");
+      return;
+    }
+
+    var base = cdnBases[i];
+    loadCss(base + "katex.min.css", function () {
+      loadScript(base + "katex.min.js", function () {
+        loadScript(base + "contrib/auto-render.min.js", function () {
+          onReady(typeset);
+        }, function () {
+          tryLoad(i + 1);
+        });
+      }, function () {
+        tryLoad(i + 1);
+      });
+    }, function () {
+      tryLoad(i + 1);
+    });
+  }
+
+  tryLoad(0);
+})();
+</script>
