@@ -6,97 +6,113 @@ tags:
   - Math
 categories:
   - 数学基础
-description: 从后验近似推导 ELBO 的一份笔记
-summary: 用 KL(q||p) 把后验推断改写为优化问题，并推导出 ELBO 及其常用等价形式，顺便解释每一项在训练中的含义。
+description: Evidence Lower Bound 推导流程
+summary: 变分推断将后验推断问题巧妙地转化为优化问题进行求解，本质上是求后验分布的替代最优分布，用KL散度衡量这个距离并最小化。
 cover:
-  image:
+ image:
 draft: false
 share: true
 ---
 
 ## 问题定义
-很多潜变量模型会写成联合分布 $p(x,z)=p(z)p(x|z)$。做贝叶斯推断时，我们真正想要的是后验 $p(z|x)$：在观测到 $x$ 之后，潜变量 $z$ 可能是什么。
+> **[变分推断](https://zhida.zhihu.com/search?content_id=173761978&content_type=Article&match_order=1&q=%E5%8F%98%E5%88%86%E6%8E%A8%E6%96%AD&zhida_source=entity)**（Variational Inference, VI）是 [贝叶斯近似推断](https://zhida.zhihu.com/search?content_id=173761978&content_type=Article&match_order=1&q=%E8%B4%9D%E5%8F%B6%E6%96%AF%E8%BF%91%E4%BC%BC%E6%8E%A8%E6%96%AD&zhida_source=entity) 方法中的一大类方法，将后验推断问题巧妙地转化为优化问题进行求解。
 
-困难点在于：后验里有一个归一化常数（也叫 evidence / marginal likelihood）：
+全称为：证据下界 Evidence Lower Bound
 
-$$
-p(x)=\int p(x,z)\,dz
-$$
+ELBO 实际上是从 KL 散度和条件概率公式推断出来的，并不涉及复杂数学操作。
+本质上是 要**求一个后验分布**，但是后验分布不好求，则**求一个最优的替代分布**。使用 **KL 散度衡量替代分布和真实分布的距离**，最小化这个距离，去除无关项则得到 ELBO 公式。
 
-当 $z$ 维度高、模型复杂时，这个积分几乎不可能精确计算，于是 $p(z|x)$ 也就“算不出来”。
-
-变分推断（Variational Inference, VI）的思路很朴素：我们挑一个容易计算的分布族 $Q$，用 $q(z)\in Q$ 去近似真实后验，并通过优化找到最合适的那个 $q$。ELBO（Evidence Lower Bound）就是把这个优化目标写成一个可计算的下界。
+给定 observation variable x （比如 RGB 图片）和 latent variable z （比如是 RGB 图片经过 encoder 得到的 latent feature）,
+假设我们想知道（学习）后验概率 $p(z|x)$ ，但发现 $p(z|x)$ 在实际中不好或者没法求解，那么我们该怎么求解这个后验概率呢？
 
 ## 推导
 ### 概率分布的表示
 ![|490](https://raw.githubusercontent.com/powerli2002/project-img/main/myblog/20250329140836140.png)
 
-图里的大圆可以理解为“所有可能的分布”，小圆 $Q$ 是我们允许的近似后验空间（例如均值场、对角高斯等）。我们希望在 $Q$ 里找到一个 $q^*(z)$，让它尽量贴近真实后验 $p(z|x)$。
-
-常用的距离度量是 KL 散度，于是目标可以写成：
-
-$$
-q^*(z)=\mathop{\mathrm{arg\,min}}\limits_{q(z)\in Q}\;\mathrm{KL}\left(q(z)\,\|\,p(z|x)\right)
-$$
-
-之所以要限制在 $Q$ 里，是为了让优化与计算变得可行：我们希望能（1）采样 $q$，（2）算出或估计所需的期望与 KL。
+大圆代表整个概率空间，小圆代表空间中 所求的 替代后验概率的分布空间，要在这个 Q 中找到最优的替代概率分布 $q∗(z)$ （此分布比后验分布好求解）。使用 L 来衡量 $q*$ 与 $p(z|x)$ 的距离，找到最近的即可。
+则这个概率分布可表示为：
+$$q^*(\boldsymbol{z})=\underset{q(\boldsymbol{z})\in Q}{\operatorname*{\arg\min}}L\left(q(\boldsymbol{z}),p(\boldsymbol{z}|\boldsymbol{x})\right)$$
+需要明确的是：
+$p(z|x)$ 是 **后验分布，表示 参数 z 在观察到 数据 x 后的概率分布，x->z**
+$q(z)$ 是 一个普通概率分布 使用 $q$ 做区分
+实际要求的是 $p(z|x)$，但是不好求，所以需要找一个最优 $q(z)$ ，也就是 $q^*(z)$
 
 ### ELBO 推导
-从 KL 的定义出发：
+使用 KL 散度作为 L，来衡量两个分布之间的距离。此时的任务变为最小化 KL 散度。
+两个分布之间的 KL 散度表示为：
+$$L(q(z),p(z|x))=\mathrm{KL}(q(z)||p(z|x))$$
 
-$$
-\mathrm{KL}\left(q(z)\,\|\,p(z|x)\right)=\mathbb{E}_q[\log q(z)]-\mathbb{E}_q[\log p(z|x)]
-$$
+展开 KL 项，KL 散度公式：$KL(P||Q)=\sum p(x)\log\frac{p(x)}{q(x)}$, 那么 $q*$ 可以表示为：
+$$\begin{aligned}
+q^{*}(z) & =\arg\min_{q(\boldsymbol{z})\in Q}\mathsf{KL}\left(q(\boldsymbol{z})||p(\boldsymbol{z}|\boldsymbol{x})\right) \\
+ & =\arg\min_{q(\boldsymbol{z})\in Q}-\int_{\boldsymbol{z}}q(\boldsymbol{z})\log\left[\frac{p(\boldsymbol{z}\mid\boldsymbol{x})}{q(\boldsymbol{z})\boldsymbol{z}}\right]d\boldsymbol{z}
+\end{aligned}$$
 
-用贝叶斯公式把后验展开：
+>由于 KL 散度大于等于 0，如果不限制 $q*$ 的分布，那么最好的情况就是让$q^{*}(z)=p(z|x)$。
+但是当 $q*$ 的分布 属于 Q 就不一定了
 
-$$
-\log p(z|x)=\log p(x,z)-\log p(x)
-$$
+问题来了。。。因为 $p(z|x)$ 不好算，我们想通过 $q^{*}(z)$ 去估计 $p(z|x)$ ，但计算 $q^{*}(z)$ 又需要用到 $p(z|x)$，这不就套娃了吗。。。
+不着急，我们先试着单独看一下KL项。
+$$\begin{aligned}
+\mathsf{KL}(q(z)||p(z\mid x)) & =-\int_{z}q(\boldsymbol{z})\log\left[\frac{p(\boldsymbol{z}\mid\boldsymbol{x})}{q(\boldsymbol{z})}\right]d\boldsymbol{z} \\
+ & =\int_{\boldsymbol{z}}q(\boldsymbol{z})\log q(\boldsymbol{z})d\boldsymbol{z}-\int_{\boldsymbol{z}}q(\boldsymbol{z})\log p(\boldsymbol{z}|\boldsymbol{x})d\boldsymbol{x}
+\end{aligned}$$
 
-把它代回 KL：
 
-$$
-\mathrm{KL}\left(q(z)\,\|\,p(z|x)\right)=\mathbb{E}_q[\log q(z)]-\mathbb{E}_q[\log p(x,z)]+\log p(x)
-$$
+这里关于 q(z) 对z积分，其实就是关于 q(z) 的期望，即 $\int_{z}^{}q(z)f(z,\cdot)dz =\mathbb{E}_q[f(z,\cdot)]$ ,那么上式能表示成期望形式：
+> 连续型随机变量的期望公式：$\mathbb{E}[Z] = \int_{-\infty}^{\infty} z \cdot q(z) dz$
+> 函数随机变量的期望公式：$\mathbb{E}[f(Z)] = \int_{-\infty}^{\infty} f(z) \cdot q(z) dz$
 
-把不依赖 $q$ 的 $\log p(x)$ 移到左边，就得到一个非常关键的分解：
+$$\begin{aligned}
+\mathsf{KL}(q(\boldsymbol{z})||p(\boldsymbol{z}\mid\boldsymbol{x})) & =-\int_{z}q(\boldsymbol{z})\log\left[\frac{p(\boldsymbol{z}\mid\boldsymbol{x})}{q(\boldsymbol{z})}\right]d\boldsymbol{z} \\
+ & =\int_\boldsymbol{z}q(\boldsymbol{z})\log q(\boldsymbol{z})d\boldsymbol{z}-\int_\boldsymbol{z}q(\boldsymbol{z})\log p(\boldsymbol{z}\mid\boldsymbol{x})d\boldsymbol{z} \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q[\log p(\boldsymbol{z}\mid\boldsymbol{x})]
+\end{aligned}$$
+第二项可以用条件概率公式继续展开：
+$$\begin{aligned}
+\mathsf{KL}(q(\boldsymbol{z})||p(\boldsymbol{z}\mid\boldsymbol{x})) & =-\int_{z}q(z)\log\left[\frac{p(z\mid x)}{q(z)}\right]dz \\
+ & =\int_\boldsymbol{z}q(\boldsymbol{z})\log q(\boldsymbol{z})d\boldsymbol{z}-\int_\boldsymbol{z}q(\boldsymbol{z})\log p(\boldsymbol{z}\mid\boldsymbol{x})d\boldsymbol{z} \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q[\log p(\boldsymbol{z}\mid\boldsymbol{x})] \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q\left[\log\left[\frac{p(\boldsymbol{x},\boldsymbol{z})}{p(\boldsymbol{x})}\right]\right] \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q[\log p(\boldsymbol{x},\boldsymbol{z})]+\mathbb{E}_q[\log p(\boldsymbol{x})]
+\end{aligned}$$
 
-$$
-\log p(x)=\underbrace{\mathbb{E}_q[\log p(x,z)]-\mathbb{E}_q[\log q(z)]}_{\mathrm{ELBO}(q)}+\mathrm{KL}\left(q(z)\,\|\,p(z|x)\right)
-$$
 
-由于 KL 散度恒非负，立刻得到下界：
+此时，变成了三项，观察各项，发现第三项里面 $\log{p(x)}$ (是一个常数)与期望的对象 $q(z)$ 是无关的，所以期望符号可以直接去掉，于是得到：
+$$\begin{aligned}
+\mathsf{KL}(q(\boldsymbol{z})||p(\boldsymbol{z}\mid\boldsymbol{x})) & =-\int_{z}q(\boldsymbol{z})\log\left[\frac{p(\boldsymbol{z}\mid\boldsymbol{x})}{q(\boldsymbol{z})}\right]d\boldsymbol{z} \\
+ & =\int_\boldsymbol{z}q(\boldsymbol{z})\log q(\boldsymbol{z})d\boldsymbol{z}-\int_\boldsymbol{z}q(\boldsymbol{z})\log p(\boldsymbol{z}\mid\boldsymbol{x})d\boldsymbol{z} \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q[\log p(\boldsymbol{z}\mid\boldsymbol{x})] \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q\left[\log\left[\frac{p(\boldsymbol{x},\boldsymbol{z})}{p(\boldsymbol{x})}\right]\right] \\
+ & =\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q[\log p(x,\boldsymbol{z})]+\mathbb{E}_q[\log p(\boldsymbol{x})] \\
+ & =\underbrace{\mathbb{E}_q[\log q(\boldsymbol{z})]-\mathbb{E}_q[\log p(\boldsymbol{x},\boldsymbol{z})]}_{-\mathrm{ELBO}}+\log p(\boldsymbol{x})
+\end{aligned}$$
 
-$$
-\log p(x)\ge \mathrm{ELBO}(q)
-$$
+此时，我们把前两项称之为 -ELBO (Evidence Lower Bound)。（注意这里是负的ELBO）
+**要最小化 KL 散度，只要最大化 ELBO 即可。** 公式表示为
 
-这就是 “Evidence Lower Bound” 这个名字的来源。并且因为 $\log p(x)$ 不依赖 $q$，所以在同一个 $Q$ 上：
-
-$$
-q^*(z)=\mathop{\mathrm{arg\,max}}\limits_{q(z)\in Q}\;\mathrm{ELBO}(q)
-$$
+$$\begin{aligned}
+q^{*}(\boldsymbol{z}) & =\underset{q(\boldsymbol{z})\in Q}{\operatorname*{\operatorname*{argmin}}}\mathsf{KL}(q(\boldsymbol{z})||\overbrace{p(\boldsymbol{z}\mid\boldsymbol{x})}^{\mathrm{unknown}}) \\
+ & =\underset{q(\boldsymbol{z})\in Q}{\operatorname*{\operatorname*{argmax}}}\mathsf{ELBO}(q)
+\end{aligned}$$
 ### ELBO计算
-把联合分布拆成 $p(x,z)=p(x|z)p(z)$，ELBO 还能写成更常用、也更易解释的形式：
+那么，关于 q(z) 的 $ELBO(q)$ 为：
+$$\mathsf{ELBO}(q)=\mathbb{E}_q\left[\log p(x,z)\right]-\mathbb{E}_q\left[\log q(z)\right]$$实际计算中，ELBO 可以表示成以下形式进行计算,使用任一形式均可：
 
-$$
-\mathrm{ELBO}(q)=\mathbb{E}_q[\log p(x|z)]-\mathrm{KL}\left(q(z)\,\|\,p(z)\right)
-$$
+$$\begin{align*}ELBO(q) &= \mathbb{E}_q[\log{p(x,z)}]-\mathbb{E}_q[\log{q(z)}]\\ &= \mathbb{E}_q[\log{p(x|z)p(z)}]-\mathbb{E}_q[\log{q(z)}]\\ &= \mathbb{E}_q[\log{p(x|z)}]+\mathbb{E}_q[\log{p(z)}]-\mathbb{E}_q[\log{q(z)}]\\ &= \mathbb{E}_q[\log{p(x|z)}]+\mathbb{E}_q[\frac{\log{p(z)}}{\log{q(z)}}]\\ &= \mathbb{E}_q[\log{p(x|z)}]+\int_{z}^{}q(z)\frac{\log{p(z)}}{\log{q(z)}}dz\\ &= \mathbb{E}_q[\log{p(x|z)}]-KL(q(z)||p(z)) \end{align*}$$
+此时 ELBO 已经推导完毕。
 
-这两项的含义可以简单理解为：
+---
 
-- $\mathbb{E}_q[\log p(x|z)]$：数据项，让模型在给定潜变量时更“解释得通”观测 $x$（在 VAE 语境下常被叫作 reconstruction term）。
-- $\mathrm{KL}(q(z)\|p(z))$：正则项，把近似后验拉向先验，避免 $q$ 偏离得太离谱。
 
-在实现上，通常会遇到两类计算：
-
-1. **KL 可解析**：比如 $q(z|x)$ 与先验 $p(z)$ 都是高斯、且协方差形式简单时，KL 有闭式表达，可以直接算。
-2. **期望用采样近似**：从 $q(z)$ 采样 $z^{(s)}$，用 Monte Carlo 估计 $\mathbb{E}_q[\log p(x|z)]$。如果要对参数求梯度，很多模型会结合重参数化技巧来降低方差（例如 VAE）。
+BTW，为啥叫Evidence Lower Bound，因为KL散度大于等于0，所以有以下不等式：
+$$\begin{aligned}
+\log p(\boldsymbol{x}) & =\mathsf{ELBO}(q)+\mathsf{KL}\left(q(\boldsymbol{z})||p(\boldsymbol{z}|\boldsymbol{x})\right) \\
+ & \geq\mathsf{ELBO}(q)
+\end{aligned}$$
+ELBO其实就是数据Evidence $\log{p(x)}$ 的下界。
 
 
 ## Reference
 
-- Blei, Kucukelbir, McAuliffe. *Variational Inference: A Review for Statisticians*. JASA 2017.
-- Jordan et al. *An Introduction to Variational Methods for Graphical Models*. Machine Learning 1999.
-- Kingma, Welling. *Auto-Encoding Variational Bayes*. ICLR 2014.
+- [变分推断之傻瓜式推导ELBO - 知乎](https://zhuanlan.zhihu.com/p/385341342)
